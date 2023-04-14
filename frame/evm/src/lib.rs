@@ -85,6 +85,7 @@ use sp_std::{cmp::min, vec::Vec};
 pub use evm::{
 	Config as EvmConfig, Context, ExitError, ExitFatal, ExitReason, ExitRevert, ExitSucceed,
 };
+use frame_support::traits::tokens::{Fortitude, Preservation};
 use fp_account::AccountId20;
 #[cfg(feature = "std")]
 use fp_evm::GenesisAccount;
@@ -738,7 +739,7 @@ impl<T: Config> Pallet<T> {
 
 		let nonce = frame_system::Pallet::<T>::account_nonce(&account_id);
 		// keepalive `true` takes into account ExistentialDeposit as part of what's considered liquid balance.
-		let balance = T::Currency::reducible_balance(&account_id, true);
+		let balance = T::Currency::reducible_balance(&account_id, Preservation::Preserve, Fortitude::Polite);
 
 		(
 			Account {

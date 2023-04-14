@@ -33,6 +33,7 @@ pub use evm::{
 	backend::{Basic as Account, Log},
 	Config, ExitReason,
 };
+use scale_info::TypeInfo;
 
 pub use self::{
 	precompile::{
@@ -56,7 +57,7 @@ pub struct Vicinity {
 	pub origin: H160,
 }
 
-#[derive(Clone, Eq, PartialEq, Encode, Decode)]
+#[derive(Clone, Eq, PartialEq, Encode, Decode, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Debug, Serialize, Deserialize))]
 pub struct ExecutionInfo<T> {
 	pub exit_reason: ExitReason,

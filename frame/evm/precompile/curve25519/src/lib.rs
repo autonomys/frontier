@@ -54,7 +54,8 @@ impl LinearCostPrecompile for Curve25519Add {
 		while !temp_buf.is_empty() {
 			let mut buf = [0; 32];
 			buf.copy_from_slice(&temp_buf[0..32]);
-			let point = CompressedRistretto::from_slice(&buf);
+			let point = CompressedRistretto::from_slice(&buf)
+				.expect("buf is 32 byte vector so should never fail.");
 			points.push(point);
 			temp_buf = &temp_buf[32..];
 		}
@@ -95,6 +96,7 @@ impl LinearCostPrecompile for Curve25519ScalarMul {
 		let mut pt_buf = [0; 32];
 		pt_buf.copy_from_slice(&input[32..64]);
 		let point: RistrettoPoint = CompressedRistretto::from_slice(&pt_buf)
+			.expect("pt_buf is 32 byte vector so should never fail.")
 			.decompress()
 			.unwrap_or_else(RistrettoPoint::identity);
 
