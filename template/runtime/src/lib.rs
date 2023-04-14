@@ -340,6 +340,7 @@ impl pallet_evm::Config for Runtime {
 	type OnChargeTransaction = ();
 	type OnCreate = ();
 	type FindAuthor = FindAuthorTruncated<Aura>;
+	type UnixTime = Timestamp;
 }
 
 parameter_types! {

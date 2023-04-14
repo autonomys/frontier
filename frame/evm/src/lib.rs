@@ -85,7 +85,6 @@ use sp_std::{cmp::min, vec::Vec};
 pub use evm::{
 	Config as EvmConfig, Context, ExitError, ExitFatal, ExitReason, ExitRevert, ExitSucceed,
 };
-use frame_support::traits::tokens::{Fortitude, Preservation};
 use fp_account::AccountId20;
 #[cfg(feature = "std")]
 use fp_evm::GenesisAccount;
@@ -94,6 +93,7 @@ pub use fp_evm::{
 	LinearCostPrecompile, Log, Precompile, PrecompileFailure, PrecompileHandle, PrecompileOutput,
 	PrecompileResult, PrecompileSet, Vicinity,
 };
+use frame_support::traits::tokens::{Fortitude, Preservation};
 
 pub use self::{
 	pallet::*,
@@ -103,7 +103,7 @@ pub use self::{
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use frame_support::pallet_prelude::*;
+	use frame_support::{pallet_prelude::*, traits::UnixTime};
 	use frame_system::pallet_prelude::*;
 
 	#[pallet::pallet]
@@ -111,7 +111,7 @@ pub mod pallet {
 	pub struct Pallet<T>(PhantomData<T>);
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_timestamp::Config {
+	pub trait Config: frame_system::Config {
 		/// Calculator for current gas price.
 		type FeeCalculator: FeeCalculator;
 
@@ -156,6 +156,9 @@ pub mod pallet {
 
 		/// Find author for the current block.
 		type FindAuthor: FindAuthor<H160>;
+
+		/// Get latest time for this block.
+		type UnixTime: UnixTime;
 
 		/// EVM config used in the module.
 		fn config() -> &'static EvmConfig {
@@ -739,7 +742,11 @@ impl<T: Config> Pallet<T> {
 
 		let nonce = frame_system::Pallet::<T>::account_nonce(&account_id);
 		// keepalive `true` takes into account ExistentialDeposit as part of what's considered liquid balance.
-		let balance = T::Currency::reducible_balance(&account_id, Preservation::Preserve, Fortitude::Polite);
+		let balance = T::Currency::reducible_balance(
+			&account_id,
+			Preservation::Expendable,
+			Fortitude::Polite,
+		);
 
 		(
 			Account {

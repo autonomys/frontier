@@ -64,6 +64,7 @@ pub use ethereum::{
 	TransactionAction, TransactionV2 as Transaction,
 };
 pub use fp_rpc::TransactionStatus;
+use frame_support::traits::UnixTime;
 
 #[derive(Clone, Eq, PartialEq, RuntimeDebug)]
 #[derive(Encode, Decode, MaxEncodedLen, TypeInfo)]
@@ -188,7 +189,7 @@ pub mod pallet {
 	pub type Origin = RawOrigin;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_timestamp::Config + pallet_evm::Config {
+	pub trait Config: frame_system::Config + pallet_evm::Config {
 		/// The overarching event type.
 		type RuntimeEvent: From<Event> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 		/// How Ethereum state root is calculated.
@@ -426,7 +427,7 @@ impl<T: Config> Pallet<T> {
 			gas_limit: T::BlockGasLimit::get(),
 			gas_used: cumulative_gas_used,
 			timestamp: UniqueSaturatedInto::<u64>::unique_saturated_into(
-				pallet_timestamp::Pallet::<T>::get(),
+				T::UnixTime::now().as_secs(),
 			),
 			extra_data: Vec::new(),
 			mix_hash: H256::default(),
