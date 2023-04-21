@@ -74,7 +74,6 @@ where
 		&TaskManager,
 		Option<TelemetryHandle>,
 		GrandpaBlockImport<FullClient<RuntimeApi, Executor>>,
-		Arc<FrontierBackend>,
 	) -> Result<
 		(
 			BasicImportQueue<FullClient<RuntimeApi, Executor>>,
@@ -136,7 +135,6 @@ where
 		&task_manager,
 		telemetry.as_ref().map(|x| x.handle()),
 		grandpa_block_import,
-		frontier_backend.clone(),
 	)?;
 
 	let transaction_pool = sc_transaction_pool::BasicPool::new_full(
@@ -167,7 +165,6 @@ pub fn build_aura_grandpa_import_queue<RuntimeApi, Executor>(
 	task_manager: &TaskManager,
 	telemetry: Option<TelemetryHandle>,
 	grandpa_block_import: GrandpaBlockImport<FullClient<RuntimeApi, Executor>>,
-	frontier_backend: Arc<FrontierBackend>,
 ) -> Result<
 	(
 		BasicImportQueue<FullClient<RuntimeApi, Executor>>,
@@ -182,11 +179,8 @@ where
 		RuntimeApiCollection<StateBackend = StateBackendFor<FullBackend, Block>>,
 	Executor: NativeExecutionDispatch + 'static,
 {
-	let frontier_block_import = FrontierBlockImport::new(
-		grandpa_block_import.clone(),
-		client.clone(),
-		frontier_backend,
-	);
+	let frontier_block_import =
+		FrontierBlockImport::new(grandpa_block_import.clone(), client.clone());
 
 	let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
 	let target_gas_price = eth_config.target_gas_price;
@@ -227,7 +221,6 @@ pub fn build_manual_seal_import_queue<RuntimeApi, Executor>(
 	task_manager: &TaskManager,
 	_telemetry: Option<TelemetryHandle>,
 	_grandpa_block_import: GrandpaBlockImport<FullClient<RuntimeApi, Executor>>,
-	frontier_backend: Arc<FrontierBackend>,
 ) -> Result<
 	(
 		BasicImportQueue<FullClient<RuntimeApi, Executor>>,
@@ -242,7 +235,7 @@ where
 		RuntimeApiCollection<StateBackend = StateBackendFor<FullBackend, Block>>,
 	Executor: NativeExecutionDispatch + 'static,
 {
-	let frontier_block_import = FrontierBlockImport::new(client.clone(), client, frontier_backend);
+	let frontier_block_import = FrontierBlockImport::new(client.clone(), client);
 	Ok((
 		sc_consensus_manual_seal::import_queue(
 			Box::new(frontier_block_import.clone()),
