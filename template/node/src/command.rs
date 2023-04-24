@@ -121,10 +121,6 @@ pub fn run() -> sc_cli::Result<()> {
 				// Remove Frontier offchain db
 				let db_config_dir = db_config_dir(&config);
 				let frontier_database_config = match config.database {
-					DatabaseSource::RocksDb { .. } => DatabaseSource::RocksDb {
-						path: frontier_database_dir(&db_config_dir, "db"),
-						cache_size: 0,
-					},
 					DatabaseSource::ParityDb { .. } => DatabaseSource::ParityDb {
 						path: frontier_database_dir(&db_config_dir, "paritydb"),
 					},

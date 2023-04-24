@@ -384,10 +384,7 @@ mod tests {
 		Ok(Arc::new(fc_db::Backend::<Block>::new(
 			client,
 			&fc_db::DatabaseSettings {
-				source: sc_client_db::DatabaseSource::RocksDb {
-					path,
-					cache_size: 0,
-				},
+				source: sc_client_db::DatabaseSource::ParityDb { path },
 			},
 		)?))
 	}

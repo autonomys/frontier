@@ -31,6 +31,7 @@ pub fn open_database<Block: BlockT, C: HeaderBackend<Block>>(
 		DatabaseSource::ParityDb { path } => {
 			open_parity_db::<Block, C>(client, path, &config.source)?
 		}
+		#[cfg(feature = "kvdb-rocksdb")]
 		DatabaseSource::RocksDb { path, .. } => {
 			open_kvdb_rocksdb::<Block, C>(client, path, true, &config.source)?
 		}

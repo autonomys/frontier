@@ -62,8 +62,7 @@ pallet-hotfix-sufficients = { workspace = true }
 substrate-wasm-builder = { workspace = true, optional = true }
 
 [features]
-default = ["std", "with-rocksdb-weights"]
-with-rocksdb-weights = []
+default = ["std", "with-paritydb-weights"]
 with-paritydb-weights = []
 std = [
 	"scale-codec/std",

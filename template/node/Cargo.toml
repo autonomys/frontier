@@ -25,7 +25,7 @@ serde = { workspace = true }
 prometheus-endpoint = { package = "substrate-prometheus-endpoint", workspace = true }
 sc-basic-authorship = { workspace = true }
 sc-chain-spec = { workspace = true }
-sc-cli = { workspace = true }
+sc-cli = { workspace = true, default-features = false }
 sc-client-api = { workspace = true }
 sc-consensus = { workspace = true }
 sc-consensus-aura = { workspace = true }
@@ -37,7 +37,7 @@ sc-network-common = { workspace = true }
 sc-network-sync = { workspace = true }
 sc-rpc = { workspace = true }
 sc-rpc-api = { workspace = true }
-sc-service = { workspace = true }
+sc-service = { workspace = true, default-features = false }
 sc-telemetry = { workspace = true }
 sc-transaction-pool = { workspace = true }
 sc-transaction-pool-api = { workspace = true }
@@ -84,8 +84,7 @@ frontier-template-runtime = { workspace = true, features = ["default"] }
 substrate-build-script-utils = { workspace = true }
 
 [features]
-default = ["with-rocksdb-weights"]
-with-rocksdb-weights = ["frontier-template-runtime/with-rocksdb-weights"]
+default = ["with-paritydb-weights"]
 with-paritydb-weights = ["frontier-template-runtime/with-paritydb-weights"]
 rpc-binary-search-estimate = ["fc-rpc/rpc-binary-search-estimate"]
 runtime-benchmarks = [
