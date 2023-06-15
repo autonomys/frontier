@@ -16,7 +16,7 @@ ethereum-types = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 # Substrate
-sc-cli = { workspace = true }
+sc-cli = { workspace = true, default-features = false }
 sp-api = { workspace = true }
 sp-blockchain = { workspace = true }
 sp-runtime = { workspace = true }

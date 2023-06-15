@@ -104,9 +104,8 @@ pub(crate) fn upgrade_db<Block: BlockT, C: HeaderBackend<Block>>(
 				DatabaseSource::ParityDb { .. } => {
 					migrate_1_to_2_parity_db::<Block, C>(client, db_path)?
 				}
-				DatabaseSource::RocksDb { .. } => {
-					migrate_1_to_2_rocks_db::<Block, C>(client, db_path)?
-				}
+				#[cfg(feature = "rocksdb")]
+				DatabaseSource::RocksDb { .. } => migrate_1_to_2_rocks_db::<Block, C>(client, db_path)?,
 				_ => panic!("DatabaseSource required for upgrade ParityDb | RocksDb"),
 			};
 			if !summary.error.is_empty() {
@@ -165,6 +164,7 @@ fn version_file_path(path: &Path) -> PathBuf {
 /// Migration from version1 to version2:
 /// - The format of the Ethereum<>Substrate block mapping changed to support equivocation.
 /// - Migrating schema from One-to-one to One-to-many (EthHash: Vec<SubstrateHash>) relationship.
+#[cfg(feature = "rocksdb")]
 pub(crate) fn migrate_1_to_2_rocks_db<Block: BlockT, C: HeaderBackend<Block>>(
 	client: Arc<C>,
 	db_path: &Path,

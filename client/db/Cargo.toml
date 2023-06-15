@@ -24,7 +24,7 @@ sqlx = { workspace = true, features = ["runtime-tokio-native-tls", "sqlite"] }
 tokio = { workspace = true, features = ["macros", "sync"] }
 # Substrate
 sc-client-api = { workspace = true }
-sc-client-db = { workspace = true, features = ["rocksdb"] }
+sc-client-db = { workspace = true, default-features = false }
 sp-api = { workspace = true }
 sp-blockchain = { workspace = true }
 sp-core = { workspace = true }
@@ -38,7 +38,11 @@ fp-rpc = { workspace = true, features = ["default"] }
 fp-storage = { workspace = true, features = ["default"] }
 
 [features]
-default = ["kvdb-rocksdb", "parity-db"]
+default = ["parity-db"]
+rocksdb = [
+	"kvdb-rocksdb",
+	"sc-client-db/rocksdb"
+]
 
 [dev-dependencies]
 maplit = "1.0.2"

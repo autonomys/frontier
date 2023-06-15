@@ -32,6 +32,7 @@ pub fn open_database<Block: BlockT, C: HeaderBackend<Block>>(
 		DatabaseSource::ParityDb { path } => {
 			open_parity_db::<Block, C>(client, path, &config.source)?
 		}
+		#[cfg(feature = "rocksdb")]
 		DatabaseSource::RocksDb { path, .. } => {
 			open_kvdb_rocksdb::<Block, C>(client, path, true, &config.source)?
 		}
@@ -51,7 +52,7 @@ pub fn open_database<Block: BlockT, C: HeaderBackend<Block>>(
 	Ok(db)
 }
 
-#[cfg(feature = "kvdb-rocksdb")]
+#[cfg(feature = "rocksdb")]
 fn open_kvdb_rocksdb<Block: BlockT, C: HeaderBackend<Block>>(
 	client: Arc<C>,
 	path: &Path,
@@ -75,7 +76,7 @@ fn open_kvdb_rocksdb<Block: BlockT, C: HeaderBackend<Block>>(
 	return Ok(sp_database::as_database(db));
 }
 
-#[cfg(not(feature = "kvdb-rocksdb"))]
+#[cfg(not(feature = "rocksdb"))]
 fn open_kvdb_rocksdb<Block: BlockT, C: HeaderBackend<Block>>(
 	_client: Arc<C>,
 	_path: &Path,
