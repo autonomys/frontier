@@ -102,12 +102,12 @@ impl pallet_balances::Config for Test {
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type ReserveIdentifier = ();
-	type HoldIdentifier = ();
 	type FreezeIdentifier = ();
 	type MaxLocks = MaxLocks;
 	type MaxReserves = ();
 	type MaxHolds = ();
 	type MaxFreezes = ();
+	type RuntimeHoldReason = ();
 }
 
 parameter_types! {

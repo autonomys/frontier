@@ -109,6 +109,7 @@ pub mod opaque {
 	}
 }
 
+#[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("frontier-template"),
 	impl_name: create_runtime_str!("frontier-template"),
@@ -219,6 +220,7 @@ impl pallet_aura::Config for Runtime {
 	type AuthorityId = AuraId;
 	type MaxAuthorities = MaxAuthorities;
 	type DisabledValidators = ();
+	type AllowMultipleBlocksPerSlot = ();
 }
 
 impl pallet_grandpa::Config for Runtime {
@@ -270,7 +272,7 @@ impl pallet_balances::Config for Runtime {
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type ReserveIdentifier = [u8; 8];
-	type HoldIdentifier = ();
+	type RuntimeHoldReason = ();
 	type FreezeIdentifier = ();
 	type MaxLocks = MaxLocks;
 	type MaxReserves = ();
