@@ -41,6 +41,7 @@ parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 	pub BlockWeights: frame_system::limits::BlockWeights =
 		frame_system::limits::BlockWeights::simple_max(Weight::from_parts(1024, 0));
+	pub const ExtrinsicsRootStateVersion: sp_core::storage::StateVersion = sp_core::storage::StateVersion::V0;
 }
 impl frame_system::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
@@ -66,6 +67,7 @@ impl frame_system::Config for Test {
 	type SS58Prefix = ();
 	type OnSetCode = ();
 	type MaxConsumers = ConstU32<16>;
+	type ExtrinsicsRootStateVersion = ExtrinsicsRootStateVersion;
 }
 
 parameter_types! {

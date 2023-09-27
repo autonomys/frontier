@@ -56,6 +56,7 @@ parameter_types! {
 	pub const MaximumBlockLength: u32 = 2 * 1024;
 	pub const AvailableBlockRatio: Perbill = Perbill::one();
 	pub const SS58Prefix: u8 = 42;
+	pub const ExtrinsicsRootStateVersion: sp_core::storage::StateVersion = sp_core::storage::StateVersion::V0;
 }
 
 impl frame_system::Config for Runtime {
@@ -82,6 +83,7 @@ impl frame_system::Config for Runtime {
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type ExtrinsicsRootStateVersion = ExtrinsicsRootStateVersion;
 }
 
 parameter_types! {

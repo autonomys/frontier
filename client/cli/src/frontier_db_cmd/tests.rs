@@ -85,6 +85,7 @@ fn cmd(key: String, value: Option<PathBuf>, operation: Operation, column: Column
 			base_path: None,
 			log: vec![],
 			disable_log_color: true,
+			use_utc_log_time: true,
 			enable_log_reloading: true,
 			tracing_targets: None,
 			tracing_receiver: sc_cli::arg_enums::TracingReceiver::Log,

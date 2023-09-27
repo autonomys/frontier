@@ -15,6 +15,7 @@ use sp_api::impl_runtime_apis;
 use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_core::{
 	crypto::{ByteArray, KeyTypeId},
+	storage::StateVersion,
 	OpaqueMetadata, H160, H256, U256,
 };
 use sp_runtime::{
@@ -160,6 +161,7 @@ parameter_types! {
 	pub BlockLength: frame_system::limits::BlockLength = frame_system::limits::BlockLength
 		::max_with_normal_ratio(MAXIMUM_BLOCK_LENGTH, NORMAL_DISPATCH_RATIO);
 	pub const SS58Prefix: u8 = 42;
+	pub const ExtrinsicsRootStateVersion: StateVersion = StateVersion::V0;
 }
 
 // Configure FRAME pallets to include in runtime.
@@ -212,6 +214,7 @@ impl frame_system::Config for Runtime {
 	/// The set code logic, just the default since we're not a parachain.
 	type OnSetCode = ();
 	type MaxConsumers = ConstU32<16>;
+	type ExtrinsicsRootStateVersion = ExtrinsicsRootStateVersion;
 }
 
 parameter_types! {
