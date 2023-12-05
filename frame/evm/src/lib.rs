@@ -221,6 +221,12 @@ pub mod pallet {
 			access_list: Vec<(H160, Vec<H256>)>,
 		) -> DispatchResultWithPostInfo {
 			T::CallOrigin::ensure_address_origin(&source, origin)?;
+			log::debug!(
+				target: "evm",
+				"Pallet::call(): value={}, gas_limit={}, max_fee_per_gas={:?} \
+				 max_priority_fee_per_gas={:?}, nonce={:?}",
+				value, gas_limit, max_fee_per_gas, max_priority_fee_per_gas, nonce,
+			);
 
 			let is_transactional = true;
 			let validate = true;
@@ -242,15 +248,24 @@ pub mod pallet {
 			) {
 				Ok(info) => info,
 				Err(e) => {
-					return Err(DispatchErrorWithPostInfo {
+					let ret = Err(DispatchErrorWithPostInfo {
 						post_info: PostDispatchInfo {
 							actual_weight: Some(e.weight),
 							pays_fee: Pays::Yes,
 						},
 						error: e.error.into(),
-					})
+					});
+					log::debug!(
+						target: "evm",
+						"Pallet::call(): err = {ret:?}"
+					);
+					return ret;
 				}
 			};
+			log::debug!(
+				target: "evm",
+				"Pallet::call(): info = {info:?}"
+			);
 
 			match info.exit_reason {
 				ExitReason::Succeed(_) => {
@@ -297,6 +312,12 @@ pub mod pallet {
 			access_list: Vec<(H160, Vec<H256>)>,
 		) -> DispatchResultWithPostInfo {
 			T::CallOrigin::ensure_address_origin(&source, origin)?;
+			log::debug!(
+				target: "evm",
+				"Pallet::create(): value={}, gas_limit={}, max_fee_per_gas={:?} \
+				 max_priority_fee_per_gas={:?}, nonce={:?}",
+				value, gas_limit, max_fee_per_gas, max_priority_fee_per_gas, nonce,
+			);
 
 			let is_transactional = true;
 			let validate = true;
@@ -317,15 +338,24 @@ pub mod pallet {
 			) {
 				Ok(info) => info,
 				Err(e) => {
-					return Err(DispatchErrorWithPostInfo {
+					let ret = Err(DispatchErrorWithPostInfo {
 						post_info: PostDispatchInfo {
 							actual_weight: Some(e.weight),
 							pays_fee: Pays::Yes,
 						},
 						error: e.error.into(),
-					})
+					});
+					log::debug!(
+						target: "evm",
+						"Pallet::create(): err = {ret:?}"
+					);
+					return ret;
 				}
 			};
+			log::debug!(
+				target: "evm",
+				"Pallet::create(): info = {info:?}"
+			);
 
 			match info {
 				CreateInfo {
@@ -384,6 +414,12 @@ pub mod pallet {
 			access_list: Vec<(H160, Vec<H256>)>,
 		) -> DispatchResultWithPostInfo {
 			T::CallOrigin::ensure_address_origin(&source, origin)?;
+			log::debug!(
+				target: "evm",
+				"Pallet::create2(): value={}, gas_limit={}, max_fee_per_gas={:?} \
+				 max_priority_fee_per_gas={:?}, nonce={:?}",
+				value, gas_limit, max_fee_per_gas, max_priority_fee_per_gas, nonce,
+			);
 
 			let is_transactional = true;
 			let validate = true;
