@@ -2936,6 +2936,7 @@ version = "3.0.0-dev"
 dependencies = [
  "evm",
  "frame-support",
+ "log",
  "num_enum",
  "parity-scale-codec",
  "scale-info",
@@ -5819,6 +5820,7 @@ dependencies = [
  "frame-system",
  "hex",
  "libsecp256k1",
+ "log",
  "pallet-balances",
  "pallet-evm",
  "pallet-timestamp",

@@ -796,8 +796,15 @@ impl<T: Config> GasWeightMapping for FixedGasWeightMapping<T> {
 		// Apply a gas to proof size ratio based on BlockGasLimit
 		let ratio = T::GasLimitPovSizeRatio::get();
 		if ratio > 0 {
+			let prev = weight.proof_size();
 			let proof_size = gas.saturating_div(ratio);
 			*weight.proof_size_mut() = proof_size;
+			log::debug!(
+				target: "evm",
+				"FixedGasWeightMapping::gas_to_weight(): gas = {}, without_base_weight = {}, WeightPerGas = {}, \
+				 ratio = {}, proof_size = {}/{}",
+				gas, without_base_weight, T::WeightPerGas::get().proof_size(), ratio, prev, weight.proof_size()
+			);
 		}
 
 		weight

@@ -131,8 +131,23 @@ impl WeightInfo {
 		if let (Some(proof_size_usage), Some(proof_size_limit)) =
 			(self.proof_size_usage, self.proof_size_limit)
 		{
-			let proof_size_usage = self.try_consume(cost, proof_size_limit, proof_size_usage)?;
+			let proof_size_usage = match self.try_consume(cost, proof_size_limit, proof_size_usage) {
+				Ok(val) => val,
+				Err(err) => {
+					log::warn!(
+						target: "evm",
+						"try_record_proof_size_or_fail(1): cost={}, proof_size_limit={}, proof_size_usage={}: err={:?}",
+						cost, proof_size_limit, proof_size_usage, err
+					);
+					return Err(err);
+				}
+			};
 			if proof_size_usage > proof_size_limit {
+				log::warn!(
+					target: "evm",
+					"try_record_proof_size_or_fail(2): cost={}, proof_size_limit={}, proof_size_usage={}",
+					cost, proof_size_limit, proof_size_usage
+				);
 				return Err(ExitError::OutOfGas);
 			}
 			self.proof_size_usage = Some(proof_size_usage);

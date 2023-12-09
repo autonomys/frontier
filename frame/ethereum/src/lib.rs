@@ -358,10 +358,16 @@ pub mod pallet {
 
 impl<T: Config> Pallet<T> {
 	pub fn transaction_weight(transaction_data: &TransactionData) -> (Option<Weight>, Option<u64>) {
-		match <T as pallet_evm::Config>::GasWeightMapping::gas_to_weight(
+		let ret = <T as pallet_evm::Config>::GasWeightMapping::gas_to_weight(
 			transaction_data.gas_limit.unique_saturated_into(),
 			true,
-		) {
+		);
+		log::debug!(
+			target: "evm",
+			"EthereumPallet::transaction_weight(): gas_limit = {}, weight_limit = {}, proof_size_base_cost = {:?}",
+			transaction_data.gas_limit, ret.proof_size(), transaction_data.proof_size_base_cost
+		);
+		match ret {
 			weight_limit if weight_limit.proof_size() > 0 => (
 				Some(weight_limit),
 				Some(transaction_data.proof_size_base_cost.unwrap_or_default()),
@@ -723,6 +729,7 @@ impl<T: Config> Pallet<T> {
 		let is_transactional = true;
 		let validate = false;
 
+
 		let (
 			input,
 			value,
@@ -785,6 +792,13 @@ impl<T: Config> Pallet<T> {
 
 		match action {
 			ethereum::TransactionAction::Call(target) => {
+				log::debug!(
+					target: "evm",
+					"PalletEthereum::execute()::call: value={}, gas_limit={}, max_fee_per_gas={:?} \
+				 	max_priority_fee_per_gas={:?}, nonce={:?}, is_transactional={}, weight_limit={:?}, proof_size_base_cost={:?}",
+					value, gas_limit, max_fee_per_gas, max_priority_fee_per_gas, nonce,
+					is_transactional, weight_limit, proof_size_base_cost
+				);
 				let res = match T::Runner::call(
 					from,
 					target,
@@ -803,19 +817,35 @@ impl<T: Config> Pallet<T> {
 				) {
 					Ok(res) => res,
 					Err(e) => {
-						return Err(DispatchErrorWithPostInfo {
+						let ret = Err(DispatchErrorWithPostInfo {
 							post_info: PostDispatchInfo {
 								actual_weight: Some(e.weight),
 								pays_fee: Pays::Yes,
 							},
 							error: e.error.into(),
-						})
+						});
+						log::debug!(
+							target: "evm",
+							"PalletEthereum::execute()::call: err = {ret:?}"
+						);
+						return ret;
 					}
 				};
+				log::debug!(
+					target: "evm",
+					"PalletEthereum::execute()::call: res = {res:?}"
+				);
 
 				Ok((Some(target), None, CallOrCreateInfo::Call(res)))
 			}
 			ethereum::TransactionAction::Create => {
+				log::debug!(
+					target: "evm",
+					"PalletEthereum::execute()::create: value={}, gas_limit={}, max_fee_per_gas={:?} \
+				 	max_priority_fee_per_gas={:?}, nonce={:?}, is_transactional={}, weight_limit={:?}, proof_size_base_cost={:?}",
+					value, gas_limit, max_fee_per_gas, max_priority_fee_per_gas, nonce,
+					is_transactional, weight_limit, proof_size_base_cost
+				);
 				let res = match T::Runner::create(
 					from,
 					input,
@@ -833,15 +863,24 @@ impl<T: Config> Pallet<T> {
 				) {
 					Ok(res) => res,
 					Err(e) => {
-						return Err(DispatchErrorWithPostInfo {
+						let ret = Err(DispatchErrorWithPostInfo {
 							post_info: PostDispatchInfo {
 								actual_weight: Some(e.weight),
 								pays_fee: Pays::Yes,
 							},
 							error: e.error.into(),
-						})
+						});
+						log::debug!(
+							target: "evm",
+							"PalletEthereum::execute()::create: err = {ret:?}"
+						);
+						return ret;
 					}
 				};
+				log::debug!(
+					target: "evm",
+					"PalletEthereum::execute()::create = {res:?}"
+				);
 
 				Ok((None, Some(res.value), CallOrCreateInfo::Create(res)))
 			}
