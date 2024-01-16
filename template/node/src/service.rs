@@ -3,12 +3,12 @@
 use std::{cell::RefCell, path::Path, sync::Arc, time::Duration};
 
 use futures::{channel::mpsc, prelude::*};
+use sc_consensus::SharedBlockImport;
 // Substrate
 use prometheus_endpoint::Registry;
 use sc_client_api::{Backend, BlockBackend};
 use sc_consensus::BasicQueue;
 use sc_executor::NativeExecutionDispatch;
-use sc_network_sync::warp::{WarpSyncParams, WarpSyncProvider};
 use sc_service::{error::Error as ServiceError, Configuration, PartialComponents, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker};
 use sc_transaction_pool_api::OffchainTransactionPoolFactory;
@@ -38,7 +38,7 @@ type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 type GrandpaBlockImport<Client> =
 	sc_consensus_grandpa::GrandpaBlockImport<FullBackend, Block, Client, FullSelectChain>;
 type GrandpaLinkHalf<Client> = sc_consensus_grandpa::LinkHalf<Block, Client, FullSelectChain>;
-type BoxBlockImport = sc_consensus::BoxBlockImport<Block>;
+type BoxBlockImport = SharedBlockImport<Block>;
 
 /// The minimum period of blocks on which justifications will be
 /// imported and generated.
@@ -227,7 +227,7 @@ where
 	)
 	.map_err::<ServiceError, _>(Into::into)?;
 
-	Ok((import_queue, Box::new(frontier_block_import)))
+	Ok((import_queue, SharedBlockImport::new(frontier_block_import)))
 }
 
 /// Build the import queue for the template runtime (manual seal).
@@ -248,11 +248,11 @@ where
 	let frontier_block_import = FrontierBlockImport::new(client.clone(), client);
 	Ok((
 		sc_consensus_manual_seal::import_queue(
-			Box::new(frontier_block_import.clone()),
+			SharedBlockImport::new(frontier_block_import.clone()),
 			&task_manager.spawn_essential_handle(),
 			config.prometheus_registry(),
 		),
-		Box::new(frontier_block_import),
+		SharedBlockImport::new(frontier_block_import),
 	))
 }
 
@@ -291,26 +291,13 @@ where
 		fee_history_cache_limit,
 	} = new_frontier_partial(&eth_config)?;
 
-	let mut net_config = sc_network::config::FullNetworkConfiguration::new(&config.network);
+	let net_config = sc_network::config::FullNetworkConfiguration::new(&config.network);
 	let grandpa_protocol_name = sc_consensus_grandpa::protocol_standard_name(
 		&client.block_hash(0)?.expect("Genesis block exists; qed"),
 		&config.chain_spec,
 	);
-	let (grandpa_protocol_config, grandpa_notification_service) =
+	let (_grandpa_protocol_config, grandpa_notification_service) =
 		sc_consensus_grandpa::grandpa_peers_set_config(grandpa_protocol_name.clone());
-
-	let warp_sync_params = if sealing.is_some() {
-		None
-	} else {
-		net_config.add_notification_protocol(grandpa_protocol_config);
-		let warp_sync: Arc<dyn WarpSyncProvider<Block>> =
-			Arc::new(sc_consensus_grandpa::warp_proof::NetworkProvider::new(
-				backend.clone(),
-				grandpa_link.shared_authority_set().clone(),
-				Vec::default(),
-			));
-		Some(WarpSyncParams::WithProvider(warp_sync))
-	};
 
 	let (network, system_rpc_tx, tx_handler_controller, network_starter, sync_service) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
@@ -321,7 +308,7 @@ where
 			spawn_handle: task_manager.spawn_handle(),
 			import_queue,
 			block_announce_validator_builder: None,
-			warp_sync_params,
+			warp_sync_params: None,
 			block_relay: None,
 		})?;
 
