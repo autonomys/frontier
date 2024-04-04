@@ -38,7 +38,7 @@ type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 type GrandpaBlockImport<Client> =
 	sc_consensus_grandpa::GrandpaBlockImport<FullBackend, Block, Client, FullSelectChain>;
 type GrandpaLinkHalf<Client> = sc_consensus_grandpa::LinkHalf<Block, Client, FullSelectChain>;
-type BoxBlockImport = sc_consensus::BoxBlockImport<Block>;
+type SharedBlockImport = sc_consensus::SharedBlockImport<Block>;
 
 /// The minimum period of blocks on which justifications will be
 /// imported and generated.
@@ -57,7 +57,7 @@ pub fn new_partial<RuntimeApi, Executor, BIQ>(
 		FullPool<FullClient<RuntimeApi, Executor>>,
 		(
 			Option<Telemetry>,
-			BoxBlockImport,
+			SharedBlockImport,
 			GrandpaLinkHalf<FullClient<RuntimeApi, Executor>>,
 			FrontierBackend,
 			Arc<fc_rpc::OverrideHandle<Block>>,
@@ -77,7 +77,7 @@ where
 		&TaskManager,
 		Option<TelemetryHandle>,
 		GrandpaBlockImport<FullClient<RuntimeApi, Executor>>,
-	) -> Result<(BasicImportQueue, BoxBlockImport), ServiceError>,
+	) -> Result<(BasicImportQueue, SharedBlockImport), ServiceError>,
 {
 	let telemetry = config
 		.telemetry_endpoints
@@ -189,7 +189,7 @@ pub fn build_aura_grandpa_import_queue<RuntimeApi, Executor>(
 	task_manager: &TaskManager,
 	telemetry: Option<TelemetryHandle>,
 	grandpa_block_import: GrandpaBlockImport<FullClient<RuntimeApi, Executor>>,
-) -> Result<(BasicImportQueue, BoxBlockImport), ServiceError>
+) -> Result<(BasicImportQueue, SharedBlockImport), ServiceError>
 where
 	RuntimeApi: ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>>,
 	RuntimeApi: Send + Sync + 'static,
@@ -227,7 +227,7 @@ where
 	)
 	.map_err::<ServiceError, _>(Into::into)?;
 
-	Ok((import_queue, Box::new(frontier_block_import)))
+	Ok((import_queue, SharedBlockImport::new(frontier_block_import)))
 }
 
 /// Build the import queue for the template runtime (manual seal).
@@ -238,7 +238,7 @@ pub fn build_manual_seal_import_queue<RuntimeApi, Executor>(
 	task_manager: &TaskManager,
 	_telemetry: Option<TelemetryHandle>,
 	_grandpa_block_import: GrandpaBlockImport<FullClient<RuntimeApi, Executor>>,
-) -> Result<(BasicImportQueue, BoxBlockImport), ServiceError>
+) -> Result<(BasicImportQueue, SharedBlockImport), ServiceError>
 where
 	RuntimeApi: ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>>,
 	RuntimeApi: Send + Sync + 'static,
@@ -248,11 +248,11 @@ where
 	let frontier_block_import = FrontierBlockImport::new(client.clone(), client);
 	Ok((
 		sc_consensus_manual_seal::import_queue(
-			Box::new(frontier_block_import.clone()),
+			SharedBlockImport::new(frontier_block_import.clone()),
 			&task_manager.spawn_essential_handle(),
 			config.prometheus_registry(),
 		),
-		Box::new(frontier_block_import),
+		SharedBlockImport::new(frontier_block_import),
 	))
 }
 
@@ -602,7 +602,7 @@ fn run_manual_seal_authorship<RuntimeApi, Executor>(
 	client: Arc<FullClient<RuntimeApi, Executor>>,
 	transaction_pool: Arc<FullPool<FullClient<RuntimeApi, Executor>>>,
 	select_chain: FullSelectChain,
-	block_import: BoxBlockImport,
+	block_import: SharedBlockImport,
 	task_manager: &TaskManager,
 	prometheus_registry: Option<&Registry>,
 	telemetry: Option<&Telemetry>,
