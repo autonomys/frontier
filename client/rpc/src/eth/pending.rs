@@ -99,7 +99,20 @@ where
 		);
 
 		// Initialize the pending block header
-		api.initialize_block(best_hash, &pending_header)?;
+		let core_version = api.api_version::<dyn Core<B>>(best_hash)?.ok_or_else(|| {
+			Error::Backend(sp_blockchain::Error::VersionInvalid("Core".to_string()))
+		})?;
+
+		if core_version >= 5 {
+			if api.initialize_block(best_hash, &pending_header).is_err() {
+				// TODO: Hack for Subspace fork caused by
+				// https://github.com/subspace/polkadot-sdk/commit/447bbc765020674614e9ac982163f7e11e5b03ea
+				// Replace with error propagation before next network
+			}
+		} else {
+			#[allow(deprecated)]
+			api.initialize_block_before_version_5(best_hash, &pending_header)?;
+		}
 
 		// Apply inherents to the pending block.
 		let inherents = api.execute_in_transaction(move |api| {
