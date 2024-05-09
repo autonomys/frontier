@@ -270,6 +270,7 @@ impl pallet_aura::Config for Runtime {
 	type MaxAuthorities = ConstU32<100>;
 	type DisabledValidators = ();
 	type AllowMultipleBlocksPerSlot = ConstBool<false>;
+	type SlotDuration = pallet_aura::MinimumPeriodTimesTwo<Runtime>;
 }
 impl pallet_grandpa::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -351,7 +352,8 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for FindAuthorTruncated<F> {
 		I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
 	{
 		if let Some(author_index) = F::find_author(digests) {
-			let authority_id = Aura::authorities()[author_index as usize].clone();
+			let authority_id =
+				pallet_aura::Authorities::<Runtime>::get()[author_index as usize].clone();
 			return Some(H160::from_slice(&authority_id.to_raw_vec()[4..24]));
 		}
 		None
@@ -670,7 +672,7 @@ impl_runtime_apis! {
 		}
 
 		fn authorities() -> Vec<AuraId> {
-			Aura::authorities().to_vec()
+			pallet_aura::Authorities::<Runtime>::get().into_inner()
 		}
 	}
 
