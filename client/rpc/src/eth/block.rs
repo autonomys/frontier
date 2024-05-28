@@ -16,10 +16,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-use std::sync::Arc;
-
 use ethereum_types::{H256, U256};
 use jsonrpsee::core::RpcResult;
+use std::sync::Arc;
 // Substrate
 use sc_client_api::backend::{Backend, StorageProvider};
 use sc_transaction_pool::ChainApi;
@@ -114,6 +113,14 @@ where
 
 				match (block, statuses) {
 					(Some(block), Some(statuses)) => {
+						// let hash = {
+						// 	let header_encoded = &mut rlp::encode(&block.header);
+						// 	if let Some(base_fee) = base_fee {
+						// 		header_encoded.extend_from_slice(&rlp::encode(&base_fee));
+						// 	}
+
+						// 	H256::from(keccak_256(&header_encoded))
+						// };
 						let hash = H256::from(keccak_256(&rlp::encode(&block.header)));
 						let mut rich_block = rich_block_build(
 							block,

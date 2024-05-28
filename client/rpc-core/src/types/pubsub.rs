@@ -107,6 +107,7 @@ impl PubSubResult {
 				difficulty: block.header.difficulty,
 				nonce: Some(block.header.nonce),
 				size: Some(U256::from(rlp::encode(&block.header).len() as u32)),
+				base_fee_per_gas: None,
 			},
 			extra_info: BTreeMap::new(),
 		}))

@@ -747,7 +747,7 @@ where
 
 	fn block_timestamp(&self) -> U256 {
 		let now: u128 = T::Timestamp::now().unique_saturated_into();
-		U256::from(now / 1000)
+		U256::from(now)
 	}
 
 	fn block_difficulty(&self) -> U256 {

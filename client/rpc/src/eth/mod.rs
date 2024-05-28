@@ -562,6 +562,17 @@ fn rich_block_build(
 	is_pending: bool,
 ) -> RichBlock {
 	let (hash, miner, nonce, total_difficulty) = if !is_pending {
+		// let hash = if let Some(hash) = hash {
+		// 	hash
+		// } else {
+		// 	let header_encoded = &mut rlp::encode(&block.header);
+		// 	if let Some(base_fee) = base_fee {
+		// 		header_encoded.extend_from_slice(&rlp::encode(&base_fee));
+		// 	}
+
+		// 	H256::from(keccak_256(&header_encoded))
+		// };
+
 		(
 			Some(hash.unwrap_or_else(|| H256::from(keccak_256(&rlp::encode(&block.header))))),
 			Some(block.header.beneficiary),
@@ -587,10 +598,11 @@ fn rich_block_build(
 				gas_limit: block.header.gas_limit,
 				extra_data: Bytes(block.header.extra_data.clone()),
 				logs_bloom: block.header.logs_bloom,
-				timestamp: U256::from(block.header.timestamp / 1000),
+				timestamp: U256::from(block.header.timestamp),
 				difficulty: block.header.difficulty,
 				nonce,
 				size: Some(U256::from(rlp::encode(&block.header).len() as u32)),
+				base_fee_per_gas: base_fee,
 			},
 			total_difficulty,
 			uncles: vec![],
@@ -712,4 +724,93 @@ impl<H> BlockInfo<H> {
 			base_fee,
 		}
 	}
+}
+
+#[test]
+fn test_eip1559_header() {
+	use ethereum::Header;
+	use hex::FromHex;
+	use sp_core::H256;
+	use std::str::FromStr;
+
+	let expected_hash =
+		H256::from_str("6a251c7c3c5dca7b42407a3752ff48f3bbca1fab7f9868371d9918daf1988d1f").unwrap();
+	let header = Header {
+		parent_hash: H256::from_str("e0a94a7a3c9617401586b1a27025d2d9671332d22d540e0af72b069170380f2a").unwrap(),
+		ommers_hash: H256::from_str("1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347").unwrap(),
+		beneficiary: H160::from_str("ba5e000000000000000000000000000000000000").unwrap(),
+		state_root: H256::from_str("ec3c94b18b8a1cff7d60f8d258ec723312932928626b4c9355eb4ab3568ec7f7").unwrap(),
+		transactions_root: H256::from_str("50f738580ed699f0469702c7ccc63ed2e51bc034be9479b7bff4e68dee84accf").unwrap(),
+		receipts_root: H256::from_str("29b0562f7140574dd0d50dee8a271b22e1a0a7b78fca58f7c60370d8317ba2a9").unwrap(),
+		logs_bloom: <[u8; 256]>::from_hex("00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000").unwrap().into(),
+		difficulty: U256::from(0x020000),
+		number: U256::from(0x01_u64),
+		gas_limit: U256::from(0x016345785d8a0000_u64),
+		gas_used: U256::from(0x015534_u64),
+		timestamp: 0x079e,
+		extra_data: hex::decode("42").unwrap(),
+		mix_hash: H256::from_str("0000000000000000000000000000000000000000000000000000000000000000").unwrap(),
+		nonce: Default::default(),
+	};
+
+	let base_fee_per_gas = U256::from(0x036b_u64);
+
+	let header_encoded = &mut rlp::encode(&header);
+
+	let base_fee = &rlp::encode(&base_fee_per_gas);
+	header_encoded.extend_from_slice(base_fee);
+
+	assert_eq!(H256::from(keccak_256(&header_encoded)), expected_hash);
+}
+
+#[test]
+fn header_mismatch_case() {
+	use ethereum::Header;
+	use hex::FromHex;
+	use std::str::FromStr;
+	// {
+	// 	header: {
+	// 	  parentHash: 0xc283147ed6a63c6890ba54512e974c9070bab0138e3db7203e2a02eb79174f07
+	// 	  ommersHash: 0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347
+	// 	  beneficiary: 0x15fdd31c61141abd04a99fd6822c8558854ccde3
+	// 	  stateRoot: 0x07021551da153bae6a5c1a4716dd50a1e22500bf4739e511e06c45ceff3acef1
+	// 	  transactionsRoot: 0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421
+	// 	  receiptsRoot: 0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421
+	// 	  logsBloom: 0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+	// 	  difficulty: 0
+	// 	  number: 125
+	// 	  gasLimit: 75,000,000
+	// 	  gasUsed: 0
+	// 	  timestamp: 1,716,821,886,005
+	// 	  extraData:
+	// 	  mixHash: 0x0000000000000000000000000000000000000000000000000000000000000000
+	// 	  nonce: 0x0000000000000000
+	// 	}
+	// 	transactions: []
+	// 	ommers: []
+	//   }
+	let stored_hash =
+		H256::from_str("0eaa775a01b3c0ac258bdf8c49702ef42500cabd51c44b85fcc97c9e19a640ec").unwrap();
+
+	let header = Header {
+		parent_hash: H256::from_str("c283147ed6a63c6890ba54512e974c9070bab0138e3db7203e2a02eb79174f07").unwrap(),
+		ommers_hash: H256::from_str("1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347").unwrap(),
+		beneficiary: H160::from_str("15fdd31c61141abd04a99fd6822c8558854ccde3").unwrap(),
+		state_root: H256::from_str("07021551da153bae6a5c1a4716dd50a1e22500bf4739e511e06c45ceff3acef1").unwrap(),
+		transactions_root: H256::from_str("56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421").unwrap(),
+		receipts_root: H256::from_str("56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421").unwrap(),
+		logs_bloom: <[u8; 256]>::from_hex("00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000").unwrap().into(),
+		difficulty: U256::from(0),
+		number: U256::from(125),
+		gas_limit: U256::from(75_000_000_u64),
+		gas_used: U256::from(0),
+		timestamp: 1_716_821_886_005,
+		extra_data: vec![],
+		mix_hash: H256::from_str("0000000000000000000000000000000000000000000000000000000000000000").unwrap(),
+		nonce: Default::default(),
+	};
+
+	let hash = header.hash();
+
+	assert_eq!(hash, stored_hash);
 }
