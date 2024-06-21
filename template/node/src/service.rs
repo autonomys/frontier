@@ -6,7 +6,7 @@ use futures::{channel::mpsc, prelude::*};
 // Substrate
 use prometheus_endpoint::Registry;
 use sc_client_api::{Backend as BackendT, BlockBackend};
-use sc_consensus::{BasicQueue, BoxBlockImport};
+use sc_consensus::{BasicQueue, SharedBlockImport};
 use sc_consensus_grandpa::BlockNumberOps;
 use sc_executor::HostFunctions as HostFunctionsT;
 use sc_network_sync::strategy::warp::{WarpSyncParams, WarpSyncProvider};
@@ -69,7 +69,7 @@ pub fn new_partial<B, RA, HF, BIQ>(
 		FullPool<B, FullClient<B, RA, HF>>,
 		(
 			Option<Telemetry>,
-			BoxBlockImport<B>,
+			SharedBlockImport<B>,
 			GrandpaLinkHalf<B, FullClient<B, RA, HF>>,
 			FrontierBackend<B, FullClient<B, RA, HF>>,
 			Arc<dyn StorageOverride<B>>,
@@ -90,7 +90,7 @@ where
 		&TaskManager,
 		Option<TelemetryHandle>,
 		GrandpaBlockImport<B, FullClient<B, RA, HF>>,
-	) -> Result<(BasicQueue<B>, BoxBlockImport<B>), ServiceError>,
+	) -> Result<(BasicQueue<B>, SharedBlockImport<B>), ServiceError>,
 {
 	let telemetry = config
 		.telemetry_endpoints
@@ -201,7 +201,7 @@ pub fn build_aura_grandpa_import_queue<B, RA, HF>(
 	task_manager: &TaskManager,
 	telemetry: Option<TelemetryHandle>,
 	grandpa_block_import: GrandpaBlockImport<B, FullClient<B, RA, HF>>,
-) -> Result<(BasicQueue<B>, BoxBlockImport<B>), ServiceError>
+) -> Result<(BasicQueue<B>, SharedBlockImport<B>), ServiceError>
 where
 	B: BlockT,
 	NumberFor<B>: BlockNumberOps,
@@ -241,7 +241,7 @@ where
 	)
 	.map_err::<ServiceError, _>(Into::into)?;
 
-	Ok((import_queue, Box::new(frontier_block_import)))
+	Ok((import_queue, SharedBlockImport::new(frontier_block_import)))
 }
 
 /// Build the import queue for the template runtime (manual seal).
@@ -252,7 +252,7 @@ pub fn build_manual_seal_import_queue<B, RA, HF>(
 	task_manager: &TaskManager,
 	_telemetry: Option<TelemetryHandle>,
 	_grandpa_block_import: GrandpaBlockImport<B, FullClient<B, RA, HF>>,
-) -> Result<(BasicQueue<B>, BoxBlockImport<B>), ServiceError>
+) -> Result<(BasicQueue<B>, SharedBlockImport<B>), ServiceError>
 where
 	B: BlockT,
 	RA: ConstructRuntimeApi<B, FullClient<B, RA, HF>>,
@@ -263,11 +263,11 @@ where
 	let frontier_block_import = FrontierBlockImport::new(client.clone(), client);
 	Ok((
 		sc_consensus_manual_seal::import_queue(
-			Box::new(frontier_block_import.clone()),
+			SharedBlockImport::new(frontier_block_import.clone()),
 			&task_manager.spawn_essential_handle(),
 			config.prometheus_registry(),
 		),
-		Box::new(frontier_block_import),
+		SharedBlockImport::new(frontier_block_import),
 	))
 }
 
@@ -636,7 +636,7 @@ fn run_manual_seal_authorship<B, RA, HF>(
 	client: Arc<FullClient<B, RA, HF>>,
 	transaction_pool: Arc<FullPool<B, FullClient<B, RA, HF>>>,
 	select_chain: FullSelectChain<B>,
-	block_import: BoxBlockImport<B>,
+	block_import: SharedBlockImport<B>,
 	task_manager: &TaskManager,
 	prometheus_registry: Option<&Registry>,
 	telemetry: Option<&Telemetry>,
