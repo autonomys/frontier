@@ -21,7 +21,7 @@ use sp_runtime::{
 	generic::ExtrinsicFormat,
 	traits::{
 		transaction_extension::TransactionExtension, Applyable, AsTransactionAuthorizedOrigin,
-		DispatchInfoOf, DispatchTransaction, Dispatchable, MaybeDisplay, Member,
+		DispatchInfoOf, DispatchTransaction, Dispatchable, MaybeDisplay, Member, Pipeline,
 		PostDispatchInfoOf, ValidateUnsigned,
 	},
 	transaction_validity::{
@@ -94,16 +94,9 @@ where
 						.validate_only(origin, &self.function, info, len, source, 0)
 						.map(|x| x.0)
 				}
-				ExtrinsicFormat::General(extension_version, ref extension) => extension
-					.validate_only(
-						None.into(),
-						&self.function,
-						info,
-						len,
-						source,
-						*extension_version,
-					)
-					.map(|x| x.0),
+				ExtrinsicFormat::General(ref extension) => {
+					extension.validate_only(None.into(), &self.function, info, len, source)
+				},
 			},
 			SelfContained(signed_info) => self
 				.function
@@ -137,8 +130,9 @@ where
 				ExtrinsicFormat::Signed(signer, extension) => {
 					extension.dispatch_transaction(Some(signer).into(), self.function, info, len, 0)
 				}
-				ExtrinsicFormat::General(extension_version, extension) => extension
-					.dispatch_transaction(None.into(), self.function, info, len, extension_version),
+				ExtrinsicFormat::General(extension) => {
+					extension.dispatch_transaction(None.into(), self.function, info, len)
+				},
 			},
 			CheckedSignature::SelfContained(signed_info) => {
 				// If pre-dispatch fail, the block must be considered invalid
